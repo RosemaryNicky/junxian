@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地球公转模拟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #000428, #004e92);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .solar-system {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .sun {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffd000, #ff8c00, #ff4500);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ff4500, 0 0 100px #ff8c00;
+            z-index: 10;
+        }
+        
+        .orbit {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        
+        .earth-orbit {
+            width: 360px;
+            height: 360px;
+            animation: orbit-rotate 36.5s linear infinite;
+        }
+        
+        .earth {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 10px 10px, #1e90ff, #0066cc, #0047ab);
+            box-shadow: 0 0 20px rgba(30, 144, 255, 0.7);
+            z-index: 20;
+        }
+        
+        .earth::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23127521" d="M20,40 C30,30 50,30 60,40 C70,50 70,70 60,80 C50,90 30,90 20,80 C10,70 10,50 20,40 Z"/><path fill="%23D2B48C" d="M40,20 C50,10 70,10 80,20 C90,30 90,50 80,60 C70,70 50,70 40,60 C30,50 30,30 40,20 Z"/></svg>') no-repeat center;
+            background-size: cover;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: earth-rotate 5s linear infinite;
+        }
+        
+        .moon-orbit {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: moon-orbit 2.7s linear infinite;
+        }
+        
+        .moon {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #f5f5f5, #d3d3d3);
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .info-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .info-section {
+            margin-bottom: 20px;
+        }
+        
+        .info-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        
+        .info-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-control label {
+            width: 120px;
+        }
+        
+        .speed-control input {
+            flex: 1;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1976d2;
+        }
+        
+        .facts {
+            margin-top: 20px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        @keyframes orbit-rotate {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+        
+        @keyframes earth-rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes moon-orbit {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .solar-system {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .earth-orbit {
+                width: 220px;
+                height: 220px;
+            }
+            
+            .sun {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .earth {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>地球公转模拟</h1>
+        <p class="subtitle">探索地球围绕太阳运行的科学奇迹</p>
+    </header>
+    
+    <div class="container">
+        <div class="solar-system">
+            <div class="sun"></div>
+            <div class="orbit earth-orbit">
+                <div class="earth">
+                    <div class="moon-orbit">
+                        <div class="moon"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-section">
+                <h2>地球公转信息</h2>
+                <div class="info-item">
+                    <span>公转周期:</span>
+                    <span>365.25天</span>
+                </div>
+                <div class="info-item">
+                    <span>公转速度:</span>
+                    <span>约107,000 km/h</span>
+                </div>
+                <div class="info-item">
+                    <span>轨道偏心率:</span>
+                    <span>0.0167</span>
+                </div>
+                <div class="info-item">
+                    <span>黄赤交角:</span>
+                    <span>23.5°</span>
+                </div>
+                <div class="info-item">
+                    <span>日地距离:</span>
+                    <span>约1.5亿公里</span>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2>季节变化</h2>
+                <p>地球的公转轨道和地轴倾斜是季节变化的主要原因。当地球在轨道上不同位置时，不同半球接收到的太阳辐射量不同，从而形成四季。</p>
+            </div>
+            
+            <div class="controls">
+                <div class="speed-control">
+                    <label for="speed">动画速度:</label>
+                    <input type="range" id="speed" min="1" max="10" value="5">
+                </div>
+                
+                <div class="buttons">
+                    <button id="play">暂停</button>
+                    <button id="reset">重置</button>
+                </div>
+            </div>
+            
+            <div class="facts">
+                <p>你知道吗？地球围绕太阳公转的速度约为每秒30公里，这比最快的子弹还要快几十倍！</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const earthOrbit = document.querySelector('.earth-orbit');
+            const moonOrbit = document.querySelector('.moon-orbit');
+            const earth = document.querySelector('.earth');
+            const speedControl = document.getElementById('speed');
+            const playButton = document.getElementById('play');
+            const resetButton = document.getElementById('reset');
+            
+            let isPlaying = true;
+            let currentSpeed = 5;
+            
+            // 更新动画速度
+            function updateSpeed() {
+                const speedValue = parseInt(speedControl.value);
+                currentSpeed = speedValue;
+                
+                // 调整动画速度（值越大，动画越快）
+                const earthSpeed = 36.5 / (speedValue * 0.2);
+                const moonSpeed = 2.7 / (speedValue * 0.2);
+                const earthRotationSpeed = 5 / (speedValue * 0.2);
+                
+                earthOrbit.style.animationDuration = `${earthSpeed}s`;
+                moonOrbit.style.animationDuration = `${moonSpeed}s`;
+                earth.style.animationDuration = `${earthRotationSpeed}s`;
+            }
+            
+            // 初始化速度
+            updateSpeed();
+            
+            // 速度控制事件
+            speedControl.addEventListener('input', updateSpeed);
+            
+            // 播放/暂停按钮事件
+            playButton.addEventListener('click', function() {
+                if (isPlaying) {
+                    earthOrbit.style.animationPlayState = 'paused';
+                    moonOrbit.style.animationPlayState = 'paused';
+                    earth.style.animationPlayState = 'paused';
+                    playButton.textContent = '播放';
+                } else {
+                    earthOrbit.style.animationPlayState = 'running';
+                    moonOrbit.style.animationPlayState = 'running';
+                    earth.style.animationPlayState = 'running';
+                    playButton.textContent = '暂停';
+                }
+                isPlaying = !isPlaying;
+            });
+            
+            // 重置按钮事件
+            resetButton.addEventListener('click', function() {
+                // 重新启动动画以重置位置
+                earthOrbit.style.animation = 'none';
+                moonOrbit.style.animation = 'none';
+                earth.style.animation = 'none';
+                
+                setTimeout(() => {
+                    updateSpeed();
+                    if (isPlaying) {
+                        earthOrbit.style.animationPlayState = 'running';
+                        moonOrbit.style.animationPlayState = 'running';
+                        earth.style.animationPlayState = 'running';
+                    }
+                }, 10);
+            });
+        });
+    </script>
+</body>
+</html>
